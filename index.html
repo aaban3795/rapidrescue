@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RapidRescue – Smart Accident Emergency Response</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--red:#d6232b;--red-d:#a8161d;--ink:#12263a;--mute:#5b6b7b;--bg:#eef1f4;--card:#fff;--line:#d5dce3;--ok:#1d7a46;--warn:#b26a00}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif}
+a{color:var(--red-d)}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding:14px clamp(16px,4vw,40px);background:var(--ink)}
+.brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font:700 26px 'Barlow Condensed',sans-serif}
+.brand svg{width:36px;height:36px}
+nav{margin-left:auto;display:flex;flex-wrap:wrap;gap:4px 18px;align-items:center}
+nav a{color:#c9d6e2;text-decoration:none;font-weight:500}nav a:hover,nav a.on{color:#fff}
+nav a.sosnav{background:var(--red);color:#fff;padding:4px 16px;border-radius:99px;font-weight:700}
+a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #f2a33a;outline-offset:3px}
+section.view{display:none;max-width:1000px;margin:0 auto;padding:36px 16px}
+section.view.on{display:block}
+h1{font:700 clamp(32px,6vw,54px)/1.05 'Barlow Condensed',sans-serif;margin:0 0 10px}
+h2{font:700 22px 'Barlow Condensed',sans-serif;margin:0 0 10px}
+.lead{color:var(--mute);max-width:60ch;margin:0 0 22px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:22px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.hero{display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center;padding:24px 0 30px}
+.cta{display:inline-block;padding:13px 22px;border-radius:8px;background:var(--red);color:#fff;font-weight:600;text-decoration:none;margin:0 8px 8px 0;border:0;font:600 16px Barlow,sans-serif;cursor:pointer}
+.cta.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+.sosbtn{width:min(250px,70vw);aspect-ratio:1;border-radius:50%;border:10px solid #f6c3c5;background:radial-gradient(circle at 35% 30%,#ef4a50,var(--red) 55%,var(--red-d));color:#fff;cursor:pointer;box-shadow:0 10px 30px rgba(214,35,43,.45);display:inline-flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;transition:transform .12s}
+.sosbtn:hover{transform:scale(1.03)}.sosbtn:active{transform:scale(.97)}.sosbtn[disabled]{filter:grayscale(.5);cursor:progress}
+.sosbtn b{font:700 72px/1 'Barlow Condensed',sans-serif;letter-spacing:.06em}.sosbtn small{font-size:14px}
+.dash{display:grid;grid-template-columns:1.5fr 1fr;gap:20px}.center{text-align:center}
+.side{display:grid;gap:20px;align-content:start}
+.coords{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:20px 0 0;text-align:left}
+.coords div{background:var(--bg);border-radius:8px;padding:10px 14px}.coords dt{font-size:13px;color:var(--mute)}.coords dd{margin:0;font-weight:600}
+label{display:block;font-weight:600;margin:0 0 6px}
+input,textarea,select{background:#fff;width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;font:inherit}
+input.bad{border-color:var(--red)}
+.row{display:flex;gap:8px}.row input{flex:1;min-width:0;width:auto}
+.btn{padding:11px 16px;border:0;border-radius:8px;background:var(--ink);color:#fff;font:600 16px Barlow,sans-serif;cursor:pointer}
+.hint{font-size:14px;color:var(--mute);margin:8px 0 0}
+.status{list-style:none;margin:0;padding:0;display:grid;gap:10px}.status li{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.pill{font-weight:600;font-size:14px;padding:3px 10px;border-radius:99px;background:var(--bg);color:var(--mute)}
+.pill.ok{background:#dcf1e5;color:var(--ok)}.pill.err{background:#fbdcdd;color:var(--red-d)}.pill.busy{background:#fdeccf;color:var(--warn)}
+.spin{margin:16px auto 0;width:32px;height:32px;border:4px solid #f3c6c8;border-top-color:var(--red);border-radius:50%;animation:s .8s linear infinite}@keyframes s{to{transform:rotate(360deg)}}
+[hidden]{display:none!important}
+.actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:18px}
+.steps{list-style:none;counter-reset:s;padding:0;display:grid;gap:14px}
+.steps li{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 20px 16px 64px;position:relative}
+.steps li::before{content:counter(s);position:absolute;left:18px;top:14px;width:32px;height:32px;border-radius:50%;background:var(--red);color:#fff;font:700 18px/32px 'Barlow Condensed',sans-serif;text-align:center}
+.steps h2,.steps p{margin:0}
+.plain{padding-left:20px;margin:0}.plain li{margin-bottom:6px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);margin-bottom:24px}
+th,td{padding:12px 16px;border-bottom:1px solid var(--line);text-align:left}td{text-align:right;font:700 24px 'Barlow Condensed',sans-serif}
+#toasts{position:fixed;right:16px;bottom:16px;display:grid;gap:8px;max-width:min(380px,calc(100vw - 32px))}
+.toast{padding:12px 16px;border-radius:8px;color:#fff;background:var(--ink);box-shadow:0 6px 20px rgba(0,0,0,.25)}.toast.ok{background:var(--ok)}.toast.err{background:var(--red-d)}
+footer{max-width:1000px;margin:10px auto 40px;padding:0 16px;color:var(--mute);font-size:14px}
+@media(max-width:760px){.hero,.dash,.grid3,.grid2{grid-template-columns:1fr}.hero .sosbtn{display:none}nav{margin-left:0;width:100%}}
+/* menu, accounts, lists */
+.menubtn{display:none;margin-left:auto;background:transparent;color:#fff;border:2px solid #4a6580;border-radius:8px;padding:6px 14px;font:600 15px Barlow,system-ui,sans-serif;cursor:pointer}
+nav a.on{color:#fff;border-bottom:2px solid var(--red)}
+form.panel label{margin-top:12px}form.panel label:first-of-type{margin-top:0}form.panel .btn{margin-top:16px}
+input:disabled{background:var(--bg);color:var(--mute)}
+.ghostbtn{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+.ctlist{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.ct{display:flex;justify-content:space-between;gap:12px;align-items:center;background:var(--bg);border-radius:8px;padding:12px 14px;word-break:break-word}
+.ct .acts{display:flex;gap:6px;flex-shrink:0}
+.ct button{padding:6px 12px;border-radius:6px;border:1.5px solid var(--ink);background:#fff;color:var(--ink);font:600 14px Barlow,system-ui,sans-serif;cursor:pointer}
+.ct button.del{border-color:var(--red-d);color:var(--red-d)}
+@media(max-width:760px){.menubtn{display:inline-block}nav{display:none;width:100%;flex-direction:column;align-items:flex-start;gap:12px;padding:8px 0 4px}nav.open{display:flex}}
+/* roles, cases, history */
+.caselist{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.case{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.case p{margin:6px 0 0}
+.case .emg{font-size:15px;background:var(--card);border:1px solid var(--line);border-left:4px solid #d93025;border-radius:6px;padding:8px 10px}
+.ch{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;font-size:18px}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.cacts{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+.cacts .cta{margin:0;padding:10px 16px}.cacts select{width:auto;min-width:160px}
+.log{font-size:14px;color:var(--mute);margin-top:10px}
+.urg{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-weight:600}
+.ub{padding:8px 14px;border-radius:8px;border:2px solid var(--line);background:#fff;font:600 15px Barlow,system-ui,sans-serif;cursor:pointer}
+.ub.high.on{background:var(--red);border-color:var(--red);color:#fff}.ub.medium.on{background:#f2a33a;border-color:#f2a33a;color:var(--ink)}.ub.low.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.pill.urg-high{background:#fbdcdd;color:var(--red-d)}.pill.urg-medium{background:#fdeccf;color:var(--warn)}.pill.urg-low{background:#dcf1e5;color:var(--ok)}
+.gmap{height:260px;border-radius:8px;margin-top:8px;border:1.5px solid var(--line);background:var(--bg)}
+gmp-place-autocomplete{width:100%;color-scheme:light}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="#home"><svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="9" fill="#d6232b"/><path d="M17 8h6v9h9v6h-9v9h-6v-9H8v-6h9z" fill="#fff"/></svg>RapidRescue</a>
+  <button id="menuBtn" class="menubtn" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+  <nav id="nav" aria-label="Main">
+    <a data-v="about" href="#about">About</a><a data-v="firstaid" href="#firstaid">First aid</a><a data-v="numbers" href="#numbers">Emergency numbers</a>
+    <a data-v="hospital" data-r="hospital" href="#hospital" hidden>Hospital dashboard</a><a data-v="ambulance" data-r="ambulance" href="#ambulance" hidden>Ambulance dashboard</a>
+    <a data-v="contacts" data-r="citizen" href="#contacts" hidden>Contacts</a><a data-v="history" data-r="citizen hospital ambulance" href="#history" hidden>History</a><a data-v="profile" data-r="citizen hospital ambulance" href="#profile" hidden>My profile</a>
+    <a id="authLink" data-v="login" href="#login">Log in</a><a class="sosnav" data-r="guest citizen" href="#sos">SOS</a>
+  </nav>
+</header>
+
+<section class="view" id="home">
+  <div class="hero"><div>
+    <h1>After a crash, one press shares where you are.</h1>
+    <p class="lead">Citizens press SOS and their location goes to hospitals and emergency contacts. The hospital sends the case to an ambulance, and the ambulance team rates how urgent it is.</p>
+    <a class="cta" href="#sos">Open SOS</a><a class="cta ghost" href="#how">How it works</a>
+  </div><a class="sosbtn" href="#sos" aria-label="Go to SOS"><b>SOS</b></a></div>
+  <div class="grid3">
+    <article class="panel"><h2>Your account</h2><p>Your profile and contacts are saved to your login.</p></article>
+    <article class="panel"><h2>Several contacts</h2><p>Save up to 10 people. Every one of them gets the alert.</p></article>
+    <article class="panel"><h2>Location only when you press</h2><p>Your browser asks permission and reads your position once. No background tracking.</p></article>
+  </div>
+</section>
+
+<section class="view" id="login">
+  <h1>Welcome to RapidRescue</h1>
+  <p class="lead">Log in as a citizen, hospital or ambulance, or create an account. Accounts and cases are saved in this browser, so hospital and ambulance logins can be tried in other tabs of the same browser.</p>
+  <div class="grid2">
+    <form class="panel" id="loginForm" novalidate><h2>Log in</h2>
+      <label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="email">
+      <label for="lPass">Password</label><input id="lPass" type="password" autocomplete="current-password">
+      <button class="btn" type="submit">Log in</button><p class="hint" id="lOut" role="status"></p></form>
+    <form class="panel" id="regForm" novalidate><h2>Create account</h2>
+      <label for="rRole">Account type</label><select id="rRole"><option value="citizen">Citizen</option><option value="hospital">Hospital</option><option value="ambulance">Ambulance</option></select>
+      <label for="rName">Full name (or hospital / ambulance name)</label><input id="rName" autocomplete="name" maxlength="100">
+      <label for="rEmail">Email</label><input id="rEmail" type="email" autocomplete="email">
+      <label for="rPass">Password (at least 8 characters)</label><input id="rPass" type="password" autocomplete="new-password">
+      <label for="rPass2">Repeat password</label><input id="rPass2" type="password" autocomplete="new-password">
+      <div id="rLocBox" hidden>
+        <label style="margin-top:12px">Location of your hospital / ambulance</label>
+        <div id="rPick"></div><input type="hidden" id="rLat"><input type="hidden" id="rLon">
+        <button class="btn ghostbtn" id="rLocBtn" type="button" style="margin-top:8px">Use my current location</button>
+        <p class="hint" id="rLocOut">Search for the place, or click the map to drop a pin.</p>
+      </div>
+      <button class="btn" type="submit">Create account</button><p class="hint" id="rOut" role="status"></p></form>
+  </div>
+</section>
+
+<section class="view" id="sos">
+  <div class="dash">
+    <div class="panel center">
+      <h1>In an emergency, press SOS</h1>
+      <p class="lead" style="margin-inline:auto">Your current location goes to hospitals and to all your emergency contacts. Location is read only when you press the button.</p>
+      <button id="sosBtn" class="sosbtn" type="button"><b>SOS</b><small>Send my location</small></button>
+      <div class="spin" id="spin" hidden></div>
+      <dl class="coords" id="coords" hidden><div><dt>Latitude</dt><dd id="lat"></dd></div><div><dt>Longitude</dt><dd id="lon"></dd></div><div><dt>Date</dt><dd id="date"></dd></div><div><dt>Time</dt><dd id="time"></dd></div></dl>
+      <p class="hint" id="manual" hidden></p>
+      <div class="actions" id="actions" hidden>
+        <a class="cta" id="mailBtn" href="#sos">Open in my email app</a><a class="cta ghost" id="gmailBtn" target="_blank" rel="noopener" href="#sos">Open in Gmail</a>
+        <button class="cta ghost" id="copyBtn" type="button">Copy message</button><a class="cta ghost" id="mapBtn" target="_blank" rel="noopener" href="#sos">View on map</a>
+      </div>
+    </div>
+    <div class="side">
+      <div class="panel"><h2>Emergency contacts</h2><p class="hint" id="ctSummary"></p><a class="cta ghost" href="#contacts">Manage contacts</a></div>
+      <div class="panel"><h2>My latest SOS</h2><div id="myCase" class="hint">No SOS sent yet.</div></div>
+      <div class="panel"><h2>Status</h2><ul class="status">
+        <li><span>GPS permission</span><b id="stPerm" class="pill">Not requested</b></li>
+        <li><span>Current location</span><b id="stLoc" class="pill">Not read</b></li>
+        <li><span>Hospital alert</span><b id="stHosp" class="pill">Idle</b></li>
+        <li><span>Emergency alert</span><b id="stAlert" class="pill" role="status" aria-live="polite">Idle</b></li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="contacts">
+  <h1>Emergency contacts</h1><p class="lead">These people receive your location when you press SOS. You can save up to 10.</p>
+  <div class="dash">
+    <div class="panel"><h2>Saved contacts</h2><ul class="ctlist" id="ctList"></ul></div>
+    <form class="panel" id="ctForm" novalidate><h2 id="formTitle">Add a contact</h2>
+      <label for="cName">Name</label><input id="cName" maxlength="100">
+      <label for="cEmail">Email address</label><input id="cEmail" type="email" inputmode="email" maxlength="254">
+      <label for="cPhone">Phone (optional)</label><input id="cPhone" type="tel" maxlength="30">
+      <label for="cRel">Relationship (optional)</label><input id="cRel" maxlength="50" placeholder="e.g. Brother">
+      <button class="btn" type="submit">Save contact</button> <button class="btn ghostbtn" id="cCancel" type="button" hidden>Cancel</button>
+      <p class="hint" id="cOut" role="status"></p></form>
+  </div>
+</section>
+
+<section class="view" id="profile">
+  <h1>My profile</h1><p class="lead">Your name, phone and emergency number are included in the emergency message so your contacts know who needs help.</p>
+  <div class="grid2">
+    <form class="panel" id="pForm" novalidate><h2>Your details</h2>
+      <label for="pEmail">Login email</label><input id="pEmail" disabled>
+      <label for="pName">Full name</label><input id="pName" maxlength="100">
+      <label for="pPhone">Phone</label><input id="pPhone" type="tel" maxlength="30">
+      <label for="pEmName">Emergency contact name (optional)</label><input id="pEmName" maxlength="100" placeholder="e.g. Father, Wife, Friend">
+      <label for="pEmNum">Emergency number</label><input id="pEmNum" type="tel" maxlength="30" placeholder="e.g. +92 300 1234567">
+      <label for="pBlood">Blood group (optional)</label><input id="pBlood" maxlength="5" placeholder="e.g. O+">
+      <label for="pNotes">Medical notes (optional)</label><textarea id="pNotes" rows="3" maxlength="500" placeholder="Allergies, conditions"></textarea>
+      <div id="pLocBox" hidden>
+        <label style="margin-top:12px">Location of your hospital / ambulance</label>
+        <div id="pPick"></div><input type="hidden" id="pLat"><input type="hidden" id="pLon">
+        <button class="btn ghostbtn" id="pLocBtn" type="button" style="margin-top:8px">Use my current location</button>
+        <p class="hint" id="pLocOut"></p>
+      </div>
+      <button class="btn" type="submit">Save profile</button><p class="hint" id="pOut" role="status"></p></form>
+    <form class="panel" id="pwForm" novalidate><h2>Change password</h2>
+      <label for="wCur">Current password</label><input id="wCur" type="password" autocomplete="current-password">
+      <label for="wNew">New password (at least 8 characters)</label><input id="wNew" type="password" autocomplete="new-password">
+      <button class="btn" type="submit">Change password</button><p class="hint" id="wOut" role="status"></p></form>
+  </div>
+  <form class="panel" id="ejForm" style="margin-top:18px" novalidate><h2>Automatic email setup (one time)</h2>
+    <p class="hint" style="margin-top:0">Needed so SOS can send the email by itself, with no email app and no Send button. Free at emailjs.com (about 200 emails a month).</p>
+    <div class="grid3">
+      <div><label for="eSvc">Service ID</label><input id="eSvc" autocomplete="off" placeholder="service_xxxxxxx"></div>
+      <div><label for="eTpl">Template ID</label><input id="eTpl" autocomplete="off" placeholder="template_xxxxxxx"></div>
+      <div><label for="eKey">Public Key</label><input id="eKey" autocomplete="off" placeholder="your public key"></div>
+    </div>
+    <button class="btn" type="submit">Save setup</button> <button class="btn ghostbtn" id="ejTest" type="button">Send test email to me</button>
+    <p class="hint" id="eOut" role="status"></p>
+    <details><summary><b>How to get these 3 values</b></summary>
+      <ol class="plain" style="margin-top:8px">
+        <li>Create a free account at emailjs.com.</li>
+        <li><b>Email Services</b> &rarr; Add New Service &rarr; <b>Gmail</b> &rarr; connect your Gmail. Copy the <b>Service ID</b>.</li>
+        <li><b>Email Templates</b> &rarr; Create New Template. Set <b>To Email</b> to <code>{{to_email}}</code> and <b>Subject</b> to <code>{{subject}}</code>. For the content paste: <code>{{message}}</code> (or use <code>{{sender}}</code>, <code>{{latitude}}</code>, <code>{{longitude}}</code>, <code>{{date}}</code>, <code>{{time}}</code>, <code>{{maps_link}}</code>). Save and copy the <b>Template ID</b>.</li>
+        <li><b>Account</b> &rarr; General &rarr; copy the <b>Public Key</b>.</li>
+        <li>Paste the 3 values above, press <b>Save setup</b>, then <b>Send test email to me</b>.</li>
+      </ol></details>
+  </form>
+</section>
+
+<section class="view" id="hospital">
+  <h1>Hospital dashboard</h1><p class="lead">SOS alerts from citizens appear here with their location. Send each case to an ambulance.</p>
+  <ul class="caselist" id="hList"></ul>
+</section>
+
+<section class="view" id="ambulance">
+  <h1>Ambulance dashboard</h1><p class="lead">Cases sent by hospitals appear here. Accept a case, drive to the citizen, and set the urgency level.</p>
+  <ul class="caselist" id="aList"></ul>
+</section>
+
+<section class="view" id="history">
+  <h1>History</h1><p class="lead">Your past cases and the steps taken for each one.</p>
+  <ul class="caselist" id="histList"></ul>
+</section>
+
+<section class="view" id="how">
+  <h1>How it works</h1>
+  <ol class="steps">
+    <li><h2>Create an account</h2><p>Sign up as a citizen, hospital or ambulance with your name, email and a password.</p></li>
+    <li><h2>Add emergency contacts</h2><p>Save the people who should be told where you are.</p></li>
+    <li><h2>Press SOS</h2><p>The browser asks to use your location. Choose Allow.</p></li>
+    <li><h2>Hospital and contacts get your location</h2><p>Hospitals see your name, phone, blood group and exact location, and the closest hospital to you gets priority. Your contacts get an email with a Google Maps link.</p></li>
+    <li><h2>Hospital sends an ambulance</h2><p>The hospital login forwards the case to an ambulance login.</p></li>
+    <li><h2>Ambulance goes and rates urgency</h2><p>The ambulance team opens directions to the citizen and marks the case High, Medium or Low urgency.</p></li>
+    <li><h2>Check your History</h2><p>Every login type can open History to see past cases and what happened at each step.</p></li>
+  </ol>
+</section>
+
+<section class="view" id="firstaid">
+  <h1>First aid after an accident</h1><p class="lead">General guidance only, not training or medical advice. Call emergency services first.</p>
+  <div class="grid2">
+    <article class="panel"><h2>Stay safe first</h2><ul class="plain"><li>Switch on hazard lights and move away from traffic.</li><li>Keep away from a smoking, leaking or burning vehicle.</li><li>Do not move an injured person unless they are in immediate danger.</li></ul></article>
+    <article class="panel"><h2>Severe bleeding</h2><ul class="plain"><li>Press firmly on the wound with a clean cloth and keep pressing.</li><li>Add more cloth on top rather than removing soaked cloth.</li><li>Keep the person lying down and warm.</li></ul></article>
+    <article class="panel"><h2>Not breathing or unresponsive</h2><ul class="plain"><li>Call emergency services and shout for help.</li><li>If trained, start CPR: 30 chest compressions, then 2 breaths.</li><li>Use an AED if one is available.</li></ul></article>
+    <article class="panel"><h2>Possible head or spine injury</h2><ul class="plain"><li>Keep the head, neck and back still.</li><li>Do not remove a rider's helmet unless the airway is blocked.</li><li>Keep watching their breathing until help arrives.</li></ul></article>
+  </div>
+</section>
+
+<section class="view" id="numbers">
+  <h1>Emergency numbers</h1><p class="lead">Call these first. RapidRescue shares your location with your contacts and registered hospitals; it does not alert official emergency services.</p>
+  <h2>Pakistan</h2>
+  <table><tbody><tr><th>Rescue 1122</th><td><a href="tel:1122">1122</a></td></tr><tr><th>Police</th><td><a href="tel:15">15</a></td></tr><tr><th>Edhi ambulance</th><td><a href="tel:115">115</a></td></tr><tr><th>Fire brigade</th><td><a href="tel:16">16</a></td></tr><tr><th>Motorway police</th><td><a href="tel:130">130</a></td></tr></tbody></table>
+  <h2>Elsewhere</h2>
+  <table><tbody><tr><th>EU and many other countries</th><td><a href="tel:112">112</a></td></tr><tr><th>United States and Canada</th><td><a href="tel:911">911</a></td></tr><tr><th>United Kingdom</th><td><a href="tel:999">999</a></td></tr></tbody></table>
+  <p class="hint">Numbers can change. Confirm them with your local authority.</p>
+</section>
+
+<section class="view" id="about">
+  <h1>About RapidRescue</h1>
+  <p class="lead">RapidRescue is a smart accident emergency response project. Its first feature makes it quick to share your location when something goes wrong on the road.</p>
+  <h2>Privacy</h2>
+  <ul class="plain"><li>Location is read only when you press SOS and is never tracked in the background.</li><li>Your account, contacts, profile and SOS cases are stored only in this browser on this device. A live version for several devices needs a server.</li><li>Passwords are stored as a salted hash, never as plain text.</li></ul>
+  <h2>Limits</h2>
+  <p>RapidRescue depends on GPS, internet and email delivery. It is an extra safety aid, not a replacement for calling emergency services.</p>
+</section>
+
+<footer><p><b>RapidRescue</b> shares your location with your contacts and with the hospitals and ambulance teams registered here. It does not contact official emergency services. In a life-threatening emergency, call your local emergency number first.</p></footer>
+<div id="toasts" aria-live="assertive"></div>
+
+<script>
+// ---- AUTOMATIC SENDING (EmailJS, free): paste your 3 values to email contacts automatically ----
+const EMAILJS = { serviceId: "", templateId: "", publicKey: "" };
+
+// ---- GOOGLE MAPS: paste your Google Maps API key (Maps JavaScript API + Places API enabled) for the location search and map ----
+const GOOGLE_MAPS_KEY = "";
+
+(() => {
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const validEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) && v.length <= 254;
+const validPhone = v => /^[0-9+\-() ]{0,30}$/.test(v);
+const val = id => $(id).value.trim();
+const pill = (el, t, c) => { el.textContent = t; el.className = "pill " + (c || ""); };
+const toast = (m, k) => { const t = document.createElement("div"); t.className = "toast " + (k || ""); t.textContent = m; $("toasts").append(t); setTimeout(() => t.remove(), 7000); };
+const load = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { toast("Could not save: browser storage is blocked.", "err"); return false; } };
+
+/* ---- accounts (stored in this browser); login session is per tab so several roles can be tested side by side ---- */
+const sessGet = () => { try { return sessionStorage.getItem("rr_session"); } catch (e) { return null; } };
+const sessSet = v => { try { sessionStorage.setItem("rr_session", v); } catch (e) {} };
+const te = new TextEncoder();
+const hex = b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, "0")).join("");
+const rand = () => hex(crypto.getRandomValues(new Uint8Array(16)));
+async function hashPw(pw, salt) {
+  if (window.crypto && crypto.subtle) {
+    const k = await crypto.subtle.importKey("raw", te.encode(pw), "PBKDF2", false, ["deriveBits"]);
+    return hex(await crypto.subtle.deriveBits({ name: "PBKDF2", salt: te.encode(salt), iterations: 100000, hash: "SHA-256" }, k, 256));
+  }
+  let h = 5381; const s = salt + pw;
+  for (let r = 0; r < 5000; r++) for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return "w" + (h >>> 0).toString(16);
+}
+const getMe = () => { const e = sessGet(), u = load("rr_users", []).find(x => x.email === e) || null; if (u && !u.role) u.role = "citizen"; return u; };
+let me = getMe(), nextView = null;
+function updateMe(fn) { const us = load("rr_users", []), u = us.find(x => x.email === me.email); fn(u); if (save("rr_users", us)) me = u; }
+
+/* ---- routing ---- */
+const VIEWS = ["home", "login", "sos", "contacts", "profile", "about", "firstaid", "numbers", "how", "hospital", "ambulance", "history"], PROTECTED = ["sos", "contacts", "profile", "hospital", "ambulance", "history"];
+const ROLE_ONLY = { sos: "citizen", contacts: "citizen", hospital: "hospital", ambulance: "ambulance" };
+const landing = u => ({ citizen: "sos", hospital: "hospital", ambulance: "ambulance" })[u.role || "citizen"];
+function route() {
+  me = getMe();
+  let id = (location.hash || "#home").slice(1); if (!VIEWS.includes(id)) id = "home";
+  if (PROTECTED.includes(id) && !me) { nextView = id; location.hash = "#login"; return; }
+  if (id === "login" && me) { location.hash = "#" + (nextView || landing(me)); nextView = null; return; }
+  if (me && ROLE_ONLY[id] && ROLE_ONLY[id] !== me.role) { location.hash = "#" + landing(me); return; }
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === id));
+  document.querySelectorAll("nav a[data-v]").forEach(a => a.classList.toggle("on", a.dataset.v === id));
+  $("authLink").textContent = me ? "Log out" : "Log in";
+  document.querySelectorAll("nav [data-r]").forEach(a => { a.hidden = !a.dataset.r.split(" ").includes(me ? me.role : "guest"); });
+  $("nav").classList.remove("open"); $("menuBtn").setAttribute("aria-expanded", "false");
+  if (id === "sos") sosOpen(); if (id === "contacts") renderContacts(); if (id === "profile") { fillProfile(); fillSetup(); }
+  if (id === "hospital") renderHospital(); if (id === "ambulance") renderAmb(); if (id === "history") renderHistory();
+  window.scrollTo(0, 0);
+}
+addEventListener("hashchange", route);
+$("menuBtn").onclick = () => { const o = $("nav").classList.toggle("open"); $("menuBtn").setAttribute("aria-expanded", o); };
+$("authLink").onclick = e => { if (getMe()) { e.preventDefault(); try { sessionStorage.removeItem("rr_session"); } catch (x) {} me = null; toast("Logged out.", "ok"); if (location.hash === "#home" || !location.hash) route(); else location.hash = "#home"; } };
+
+/* ---- locations ---- */
+const parseCoord = (v, max) => { v = String(v).trim(); const n = Number(v); return v !== "" && isFinite(n) && Math.abs(n) <= max ? n : null; };
+const hasLoc = u => !!u && u.lat != null && u.lon != null && isFinite(u.lat) && isFinite(u.lon);
+const dist = (a, b, c, d) => { const r = Math.PI / 180, x = Math.sin((c - a) * r / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin((d - b) * r / 2) ** 2; return 12742 * Math.asin(Math.sqrt(x)); };
+const km = x => x < 10 ? x.toFixed(1) + " km" : Math.round(x) + " km";
+const MSG0 = "Search for the place, or click the map to drop a pin.";
+let gmP = null, gmFailed = false; const pickers = {};
+window.gm_authFailure = () => { gmFailed = true; ["r", "p"].forEach(q => { const o = $(q + "LocOut"); if (o) o.textContent = "Google Maps rejected the API key. Check the key and that Maps JavaScript API and Places API are enabled."; }); };
+function loadMaps() {
+  if (gmP) return gmP;
+  gmP = new Promise((res, rej) => {
+    if (!GOOGLE_MAPS_KEY) return rej(new Error("nokey"));
+    window.__gmInit = res;
+    const sc = document.createElement("script");
+    sc.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(GOOGLE_MAPS_KEY) + "&loading=async&v=weekly&callback=__gmInit";
+    sc.async = true; sc.onerror = () => { gmP = null; rej(new Error("load")); }; document.head.append(sc);
+  });
+  return gmP;
+}
+async function initPicker(q) {
+  const box = $(q + "Pick"), out = $(q + "LocOut");
+  if (pickers[q]) { pickers[q].sync(); return; }
+  try { await loadMaps(); } catch (e) {
+    out.textContent = e.message === "nokey" ? "Map search is not set up yet: add a Google Maps API key at the top of the file (GOOGLE_MAPS_KEY). You can still use Use my current location." : "Could not load Google Maps. Check your internet connection.";
+    return;
+  }
+  if (pickers[q] || gmFailed) return;
+  const maps = await google.maps.importLibrary("maps"), places = await google.maps.importLibrary("places"), mk = await google.maps.importLibrary("marker");
+  box.innerHTML = "";
+  const ac = new places.PlaceAutocompleteElement({}); ac.placeholder = "Search for your hospital / ambulance location";
+  const md = document.createElement("div"); md.className = "gmap"; box.append(ac, md);
+  const map = new maps.Map(md, { center: { lat: 30.3753, lng: 69.3451 }, zoom: 5, mapTypeControl: false, streetViewControl: false, fullscreenControl: false });
+  const marker = new mk.Marker({ map: map, draggable: true, visible: false });
+  const set = (pos, zoom, name) => {
+    $(q + "Lat").value = pos.lat.toFixed(6); $(q + "Lon").value = pos.lng.toFixed(6);
+    marker.setPosition(pos); marker.setVisible(true); if (zoom) { map.setCenter(pos); map.setZoom(zoom); }
+    out.textContent = "Location selected" + (name ? ": " + name : ".") + " You can drag the pin to adjust it.";
+  };
+  ac.addEventListener("gmp-select", async ev => {
+    try {
+      const pl = ev.placePrediction.toPlace(); await pl.fetchFields({ fields: ["displayName", "formattedAddress", "location", "viewport"] });
+      set(pl.location.toJSON(), 0, pl.displayName || pl.formattedAddress || "");
+      if (pl.viewport) map.fitBounds(pl.viewport); else { map.setCenter(pl.location); map.setZoom(16); }
+    } catch (x) { out.textContent = "Could not read that place. Try another search or click the map."; }
+  });
+  map.addListener("click", ev => set(ev.latLng.toJSON(), 0));
+  marker.addListener("dragend", ev => set(ev.latLng.toJSON(), 0));
+  const sync = () => {
+    google.maps.event.trigger(map, "resize");
+    const la = parseCoord($(q + "Lat").value, 90), lo = parseCoord($(q + "Lon").value, 180);
+    if (la === null || lo === null) { marker.setVisible(false); out.textContent = MSG0; return; }
+    const pos = { lat: la, lng: lo }; marker.setPosition(pos); marker.setVisible(true); map.setCenter(pos); map.setZoom(16); out.textContent = "Location selected. You can drag the pin to adjust it.";
+  };
+  pickers[q] = { set: set, sync: sync }; sync();
+}
+function useHere(q) {
+  const out = $(q + "LocOut");
+  if (!navigator.geolocation) { out.textContent = "This browser does not support location. Use the search box or click the map."; return; }
+  out.textContent = "Reading your location...";
+  navigator.geolocation.getCurrentPosition(p => {
+    const pos = { lat: p.coords.latitude, lng: p.coords.longitude };
+    if (pickers[q]) pickers[q].set(pos, 16, "your current location");
+    else { $(q + "Lat").value = pos.lat.toFixed(6); $(q + "Lon").value = pos.lng.toFixed(6); out.textContent = "Current location selected."; }
+  }, () => { out.textContent = "Could not read your location. Allow location for this page, or use the search box."; }, { enableHighAccuracy: true, timeout: 15000 });
+}
+const regLoc = () => { const show = $("rRole").value !== "citizen"; $("rLocBox").hidden = !show; if (show) initPicker("r"); };
+$("rRole").addEventListener("change", regLoc); regLoc();
+$("rLocBtn").onclick = () => useHere("r");
+$("pLocBtn").onclick = () => useHere("p");
+
+/* ---- login / register ---- */
+$("loginForm").addEventListener("submit", async e => {
+  e.preventDefault(); const o = $("lOut"), email = val("lEmail").toLowerCase();
+  if (!validEmail(email) || !$("lPass").value) { o.textContent = "Enter your email and password."; return; }
+  const u = load("rr_users", []).find(x => x.email === email);
+  if (!u || (await hashPw($("lPass").value, u.salt)) !== u.hash) { o.textContent = "Incorrect email or password."; return; }
+  sessSet(email); o.textContent = ""; e.target.reset(); location.hash = "#" + (nextView || landing(u)); nextView = null; route();
+});
+$("regForm").addEventListener("submit", async e => {
+  e.preventDefault(); const o = $("rOut"), name = val("rName"), email = val("rEmail").toLowerCase(), pw = $("rPass").value;
+  if (!name) { o.textContent = "Enter your name."; return; }
+  if (!validEmail(email)) { o.textContent = "Enter a valid email address."; return; }
+  if (pw.length < 8) { o.textContent = "Password must be at least 8 characters."; return; }
+  if (pw !== $("rPass2").value) { o.textContent = "The two passwords do not match."; return; }
+  const us = load("rr_users", []);
+  if (us.some(x => x.email === email)) { o.textContent = "An account with this email already exists. Log in instead."; return; }
+  const role = ["hospital", "ambulance"].includes($("rRole").value) ? $("rRole").value : "citizen";
+  let loc = {};
+  if (role !== "citizen") {
+    const la = parseCoord($("rLat").value, 90), lo = parseCoord($("rLon").value, 180);
+    if (la === null || lo === null) { o.textContent = "Choose the location of your " + role + ": search for it, click the map, or press Use my current location."; return; }
+    loc = { lat: la, lon: lo };
+  }
+  const salt = rand(); us.push(Object.assign({ email, name, role, salt, hash: await hashPw(pw, salt), phone: "", emName: "", emNum: "", blood: "", notes: "", contacts: [] }, loc));
+  if (!save("rr_users", us)) return;
+  sessSet(email); o.textContent = ""; e.target.reset(); $("rLat").value = $("rLon").value = ""; $("rLocOut").textContent = MSG0; if (pickers.r) pickers.r.sync(); regLoc(); toast("Account created.", "ok"); location.hash = "#" + (nextView || (role === "citizen" ? "contacts" : landing({ role }))); nextView = null; route();
+});
+
+/* ---- profile ---- */
+function fillProfile() { $("pEmail").value = me.email; $("pName").value = me.name; $("pPhone").value = me.phone; $("pBlood").value = me.blood; $("pNotes").value = me.notes; $("pEmName").value = me.emName || ""; $("pEmNum").value = me.emNum || ""; $("pOut").textContent = ""; $("wOut").textContent = "";
+  const cz = me.role === "citizen"; ["pBlood", "pNotes", "pEmName", "pEmNum"].forEach(i => { $(i).hidden = !cz; document.querySelector('label[for="' + i + '"]').hidden = !cz; }); $("ejForm").hidden = !cz;
+  $("pLocBox").hidden = cz; $("pLat").value = me.lat == null ? "" : me.lat; $("pLon").value = me.lon == null ? "" : me.lon; $("pLocOut").textContent = MSG0; if (!cz) initPicker("p"); }
+$("pForm").addEventListener("submit", e => {
+  e.preventDefault();
+  if (!val("pName")) { $("pOut").textContent = "Enter your name."; return; }
+  if (!validPhone(val("pPhone"))) { $("pOut").textContent = "Phone can contain only digits, + - ( ) and spaces."; return; }
+  if (me.role === "citizen" && !val("pEmNum")) { $("pOut").textContent = "Enter an emergency number."; return; }
+  if (!validPhone(val("pEmNum"))) { $("pOut").textContent = "Emergency number can contain only digits, + - ( ) and spaces."; return; }
+  let loc = null;
+  if (me.role !== "citizen") {
+    const la = parseCoord(val("pLat"), 90), lo = parseCoord(val("pLon"), 180);
+    if (la === null || lo === null) { $("pOut").textContent = "Choose the location of your " + me.role + ": search for it, click the map, or press Use my current location."; return; }
+    loc = { lat: la, lon: lo };
+  }
+  updateMe(u => { u.name = val("pName"); u.phone = val("pPhone"); u.emName = val("pEmName"); u.emNum = val("pEmNum"); u.blood = val("pBlood"); u.notes = val("pNotes"); if (loc) { u.lat = loc.lat; u.lon = loc.lon; } });
+  $("pOut").textContent = "Profile saved."; toast("Profile saved.", "ok");
+});
+$("pwForm").addEventListener("submit", async e => {
+  e.preventDefault(); const o = $("wOut"), np = $("wNew").value;
+  if ((await hashPw($("wCur").value, me.salt)) !== me.hash) { o.textContent = "Current password is incorrect."; return; }
+  if (np.length < 8) { o.textContent = "New password must be at least 8 characters."; return; }
+  const salt = rand(), hash = await hashPw(np, salt);
+  updateMe(u => { u.salt = salt; u.hash = hash; }); e.target.reset(); o.textContent = "Password changed."; toast("Password changed.", "ok");
+});
+
+/* ---- contacts ---- */
+let editId = null;
+const resetForm = () => { editId = null; $("ctForm").reset(); $("formTitle").textContent = "Add a contact"; $("cCancel").hidden = true; };
+function renderContacts() {
+  const ul = $("ctList"); resetForm(); $("cOut").textContent = "";
+  ul.innerHTML = me.contacts.length ? me.contacts.map(c =>
+    '<li class="ct"><div><b>' + esc(c.name) + (c.relation ? " (" + esc(c.relation) + ")" : "") + "</b><br>" + esc(c.email) + (c.phone ? " &middot; " + esc(c.phone) : "") +
+    '</div><div class="acts"><button type="button" data-a="edit" data-id="' + esc(c.id) + '">Edit</button><button type="button" class="del" data-a="del" data-id="' + esc(c.id) + '">Delete</button></div></li>'
+  ).join("") : '<li class="hint">No contacts yet. Add your first one.</li>';
+}
+$("ctList").onclick = e => {
+  const b = e.target.closest("button[data-a]"); if (!b) return;
+  const c = me.contacts.find(x => x.id === b.dataset.id); if (!c) return;
+  if (b.dataset.a === "edit") { editId = c.id; $("cName").value = c.name; $("cEmail").value = c.email; $("cPhone").value = c.phone; $("cRel").value = c.relation; $("formTitle").textContent = "Edit contact"; $("cCancel").hidden = false; $("cName").focus(); }
+  else if (confirm("Delete " + c.name + "?")) { updateMe(u => { u.contacts = u.contacts.filter(x => x.id !== c.id); }); toast("Contact deleted.", "ok"); renderContacts(); }
+};
+$("cCancel").onclick = resetForm;
+$("ctForm").addEventListener("submit", e => {
+  e.preventDefault(); const o = $("cOut"), c = { name: val("cName"), email: val("cEmail").toLowerCase(), phone: val("cPhone"), relation: val("cRel") };
+  if (!c.name) { o.textContent = "Enter the contact's name."; return; }
+  if (!validEmail(c.email)) { o.textContent = "Enter a valid email address."; return; }
+  if (!validPhone(c.phone)) { o.textContent = "Phone can contain only digits, + - ( ) and spaces."; return; }
+  if (!editId && me.contacts.length >= 10) { o.textContent = "You can save up to 10 contacts."; return; }
+  updateMe(u => { if (editId) Object.assign(u.contacts.find(x => x.id === editId), c); else u.contacts.push(Object.assign({ id: rand() }, c)); });
+  toast("Contact saved.", "ok"); renderContacts();
+});
+
+/* ---- SOS ---- */
+const getCfg = () => { const v = load("rr_emailjs", {}); return { serviceId: v.serviceId || EMAILJS.serviceId, templateId: v.templateId || EMAILJS.templateId, publicKey: v.publicKey || EMAILJS.publicKey }; };
+const cfgOk = c => !!(c.serviceId && c.templateId && c.publicKey);
+async function emailjsSend(cfg, params) {
+  let r;
+  try { r = await fetch("https://api.emailjs.com/api/v1.0/email/send", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ service_id: cfg.serviceId, template_id: cfg.templateId, user_id: cfg.publicKey, template_params: params }) }); }
+  catch (e) { throw new Error("No internet connection."); }
+  if (!r.ok) throw new Error(((await r.text()) || ("Error " + r.status)).slice(0, 140));
+}
+function fillSetup() { const c = getCfg(); $("eSvc").value = c.serviceId; $("eTpl").value = c.templateId; $("eKey").value = c.publicKey; $("eOut").textContent = cfgOk(c) ? "Automatic sending is ON." : "Not set up yet."; }
+$("ejForm").addEventListener("submit", e => {
+  e.preventDefault();
+  if (!val("eSvc") || !val("eTpl") || !val("eKey")) { $("eOut").textContent = "Fill in all three values."; return; }
+  if (save("rr_emailjs", { serviceId: val("eSvc"), templateId: val("eTpl"), publicKey: val("eKey") })) { $("eOut").textContent = "Saved. Automatic sending is ON. Press the test button to check it."; toast("Setup saved.", "ok"); }
+});
+$("ejTest").onclick = async () => {
+  const cfg = { serviceId: val("eSvc"), templateId: val("eTpl"), publicKey: val("eKey") };
+  if (!cfgOk(cfg)) { $("eOut").textContent = "Fill in all three values first."; return; }
+  $("eOut").textContent = "Sending test email...";
+  try {
+    await emailjsSend(cfg, { to_email: me.email, subject: "RAPIDRESCUE – TEST EMAIL", sender: me.name, latitude: "test", longitude: "test", date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString(), maps_link: "https://www.google.com/maps", accuracy: 0,
+      message: "This is a test from RapidRescue. Automatic emergency emails are working." });
+    save("rr_emailjs", cfg); $("eOut").textContent = "Test email sent to " + me.email + ". Check your inbox (and spam). Setup saved."; toast("Test email sent.", "ok");
+  } catch (er) { $("eOut").textContent = "Test failed: " + er.message; toast("Test failed: " + er.message, "err"); }
+};
+async function permission() {
+  if (!navigator.geolocation) return pill($("stPerm"), "Not supported", "err");
+  try {
+    const p = await navigator.permissions.query({ name: "geolocation" });
+    const paint = () => pill($("stPerm"), { granted: "Granted", denied: "Denied", prompt: "Will ask on SOS" }[p.state], p.state === "granted" ? "ok" : p.state === "denied" ? "err" : "");
+    paint(); p.onchange = paint;
+  } catch (e) { pill($("stPerm"), "Will ask on SOS"); }
+}
+function sosOpen() {
+  const n = me.contacts.length;
+  $("ctSummary").textContent = n ? "Alerts go to " + n + " contact(s): " + me.contacts.map(c => c.name).join(", ") + "." : "No contacts yet. SOS still alerts hospitals, but add contacts so people you trust get an email too.";
+  permission(); renderMyCase();
+}
+const getOnce = o => new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, o));
+const getPosition = async () => {
+  try { return await getOnce({ enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }); }
+  catch (e) { if (e.code === 1) throw e; return getOnce({ enableHighAccuracy: false, timeout: 20000, maximumAge: 30000 }); }
+};
+$("sosBtn").onclick = async () => {
+  me = getMe(); if (!me) { route(); return; }
+  if (me.role !== "citizen") return;
+  if (!navigator.geolocation) return toast("This browser does not support location.", "err");
+  $("sosBtn").disabled = true; $("spin").hidden = false; $("actions").hidden = true; $("manual").hidden = true;
+  pill($("stAlert"), "Getting location...", "busy"); pill($("stLoc"), "Reading...", "busy");
+  try {
+    let pos;
+    try { pos = await getPosition(); } catch (g) {
+      pill($("stLoc"), "Unavailable", "err");
+      throw new Error(g.code === 1 ? "Location permission was denied. Allow location for this page in your browser settings, then press SOS again."
+        : g.code === 3 ? "Location timed out. Turn on Wi-Fi, move near a window or outdoors, and try again."
+        : "Your device could not find its location. On Windows: Settings > Privacy & security > Location must be ON, and Wi-Fi must be on.");
+    }
+    const c = pos.coords, d = new Date(), lat = c.latitude.toFixed(6), lon = c.longitude.toFixed(6);
+    const date = d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+    const time = d.toLocaleTimeString(undefined, { hour12: false, timeZoneName: "short" });
+    const map = "https://www.google.com/maps?q=" + lat + "," + lon, who = me.name + (me.phone ? " (" + me.phone + ")" : ""), emLine = me.emNum ? "\nEmergency number: " + me.emNum + (me.emName ? " (" + me.emName + ")" : "") : "";
+    $("lat").textContent = lat; $("lon").textContent = lon; $("date").textContent = date; $("time").textContent = time; $("coords").hidden = false;
+    pill($("stLoc"), "Found (+/-" + Math.round(c.accuracy) + " m)", "ok"); pill($("stPerm"), "Granted", "ok");
+    const hs = load("rr_users", []).filter(u => u.role === "hospital" && hasLoc(u)).map(u => ({ email: u.email, name: u.name, d: dist(+lat, +lon, u.lat, u.lon) })).sort((a, b) => a.d - b.d), near = hs[0] || null;
+    const cs = load("rr_cases", []);
+    cs.unshift({ id: rand().slice(0, 8), email: me.email, name: me.name, phone: me.phone, emName: me.emName || "", emNum: me.emNum || "", blood: me.blood, notes: me.notes, lat: lat, lon: lon, acc: Math.round(c.accuracy), map: map, created: Date.now(), status: "new", urgency: "", nearest: near ? near.email : "", nearestName: near ? near.name : "", nearestKm: near ? +near.d.toFixed(2) : null, hdist: Object.fromEntries(hs.map(h => [h.email, +h.d.toFixed(2)])), hospital: "", hospitalName: "", amb: "", ambName: "",
+      log: [{ t: Date.now(), s: "SOS pressed by " + me.name + ". Location sent to hospitals." + (near ? " Closest hospital: " + near.name + " (" + km(near.d) + ")." : " No hospital location is on file, so every hospital can see it.") }] });
+    const saved = save("rr_cases", cs); pill($("stHosp"), saved ? (near ? "Closest: " + near.name : "Sent to hospitals") : "Not sent", saved ? "ok" : "err"); renderMyCase();
+    const subject = "RAPIDRESCUE \u2013 EMERGENCY SOS ALERT", enc = encodeURIComponent, emails = me.contacts.map(x => x.email);
+    const body = "Emergency Alert: SOS Activated\nMessage: An emergency request has been triggered.\nFrom: " + who + emLine + "\n\nLatitude: " + lat + "\nLongitude: " + lon +
+      "\nDate: " + date + "\nTime: " + time + "\n\nGoogle Maps Location: " + map + "\n";
+    $("mailBtn").href = "mailto:" + emails.join(",") + "?subject=" + enc(subject) + "&body=" + enc(body);
+    $("gmailBtn").href = "https://mail.google.com/mail/?view=cm&fs=1&to=" + enc(emails.join(",")) + "&su=" + enc(subject) + "&body=" + enc(body);
+    $("mapBtn").href = map;
+    $("copyBtn").onclick = async () => { try { await navigator.clipboard.writeText(subject + "\n\n" + body); toast("Message copied.", "ok"); } catch (x) { toast("Could not copy.", "err"); } };
+    const manual = why => {
+      $("mailBtn").hidden = $("gmailBtn").hidden = $("copyBtn").hidden = false; $("actions").hidden = false;
+      $("manual").textContent = why; $("manual").hidden = false; pill($("stAlert"), "Send it manually", "busy");
+    };
+    if (!emails.length) { pill($("stAlert"), "No contacts to email", ""); toast("SOS sent to hospitals. You have no emergency contacts to email.", "ok"); return; }
+    const cfg = getCfg();
+    if (cfgOk(cfg)) {
+      pill($("stAlert"), "Sending emails...", "busy");
+      const sent = [], failed = []; let why = "";
+      for (const to of emails) {
+        try { await emailjsSend(cfg, { to_email: to, subject: subject, sender: who, latitude: lat, longitude: lon, date: date, time: time, maps_link: map, accuracy: Math.round(c.accuracy), message: body }); sent.push(to); }
+        catch (er) { failed.push(to); why = er.message; }
+      }
+      if (!sent.length) { manual("Automatic sending failed: " + why + " You can send the prepared message with these buttons.", false); toast("Automatic sending failed: " + why, "err"); }
+      else {
+        $("mailBtn").hidden = $("gmailBtn").hidden = $("copyBtn").hidden = true; $("actions").hidden = false;
+        if (failed.length) { pill($("stAlert"), "Sent to " + sent.length + ", " + failed.length + " failed", "err"); toast("Failed for: " + failed.join(", "), "err"); }
+        else { pill($("stAlert"), "Alert sent", "ok"); toast("Emergency email sent to " + sent.join(", ") + ".", "ok"); }
+      }
+    } else {
+      manual("Automatic sending is not set up yet. Open My profile, then Automatic email setup, and paste your 3 EmailJS values once. Until then, use these buttons.", false);
+      pill($("stAlert"), "Setup needed", "err"); toast("Automatic sending is not set up yet. See My profile.", "err");
+    }
+  } catch (e) { pill($("stAlert"), "Not sent", "err"); toast(e.message, "err"); }
+  finally { $("sosBtn").disabled = false; $("spin").hidden = true; }
+};
+
+/* ---- cases: citizen -> hospital -> ambulance ---- */
+const cases = () => load("rr_cases", []);
+const ST = { new: "Sent to hospital", dispatched: "Sent to ambulance", enroute: "Ambulance on the way", closed: "Case closed" };
+const STC = { new: "busy", dispatched: "busy", enroute: "ok", closed: "" };
+const fmt = t => new Date(t).toLocaleString();
+const urgPill = c => c.urgency ? '<span class="pill urg-' + c.urgency + '">' + c.urgency.toUpperCase() + " urgency</span>" : '<span class="pill">Urgency not set</span>';
+const addLog = (c, s) => c.log.push({ t: Date.now(), s: s });
+function mutate(id, fn) { const a = cases(), c = a.find(x => x.id === id); if (!c) return false; fn(c); return save("rr_cases", a); }
+function caseCard(c, acts, showLog) {
+  return '<li class="case"><div class="ch"><b>' + esc(c.name) + '</b><span class="pills"><span class="pill ' + STC[c.status] + '">' + ST[c.status] + "</span>" + prioPill(c) + urgPill(c) + "</span></div>" +
+    '<p class="hint">' + esc(fmt(c.created)) + " &middot; " + esc(c.lat) + ", " + esc(c.lon) + " (+/-" + esc(c.acc) + " m)" + (c.phone ? ' &middot; <a href="tel:' + esc(c.phone) + '">' + esc(c.phone) + "</a>" : "") + (c.blood ? " &middot; Blood " + esc(c.blood) : "") + "</p>" +
+    (c.emNum ? '<p class="emg"><b>Emergency contact:</b> ' + (c.emName ? esc(c.emName) + " &middot; " : "") + '<a href="tel:' + esc(c.emNum) + '">' + esc(c.emNum) + "</a></p>" : "") +
+    (c.notes ? '<p class="hint">Medical notes: ' + esc(c.notes) + "</p>" : "") +
+    (c.hospitalName || c.ambName ? '<p class="hint">' + (c.hospitalName ? "Hospital: " + esc(c.hospitalName) : "") + (c.hospitalName && c.ambName ? " &middot; " : "") + (c.ambName ? "Ambulance: " + esc(c.ambName) : "") + "</p>" : "") +
+    (showLog ? '<ul class="plain log">' + c.log.map(l => "<li>" + esc(fmt(l.t)) + " &ndash; " + esc(l.s) + "</li>").join("") + "</ul>" : "") +
+    (acts ? '<div class="cacts">' + acts + "</div>" : "") + "</li>";
+}
+const prioPill = c => {
+  if (me.role !== "hospital" || c.status !== "new" || !c.nearest) return "";
+  const d = c.hdist && c.hdist[me.email], dd = d != null ? " &middot; " + km(d) : "";
+  return c.nearest === me.email ? '<span class="pill ok">Closest to you' + dd + "</span>" : '<span class="pill">Closer hospital: ' + esc(c.nearestName) + dd + "</span>";
+};
+const ambOpts = (ambs, c) => ambs.map(a => ({ a: a, d: hasLoc(a) ? dist(+c.lat, +c.lon, a.lat, a.lon) : null })).sort((x, y) => (x.d == null) - (y.d == null) || x.d - y.d)
+  .map(o => '<option value="' + esc(o.a.email) + '">' + esc(o.a.name) + (o.d != null ? " (" + km(o.d) + " away)" : "") + "</option>").join("");
+const mapA = c => '<a class="cta ghost" target="_blank" rel="noopener" href="' + esc(c.map) + '">View location</a>';
+
+function renderHospital() {
+  const ambs = load("rr_users", []).filter(u => u.role === "ambulance");
+  const list = cases().filter(c => c.status !== "closed" && (!c.hospital || c.hospital === me.email)).sort((a, b) => ((b.nearest === me.email) - (a.nearest === me.email)) || a.created - b.created);
+  $("hList").innerHTML = list.length ? list.map(c => caseCard(c, mapA(c) + (c.status === "new" ?
+    '<select data-sel="' + esc(c.id) + '" aria-label="Choose ambulance"><option value="">Any ambulance</option>' + ambOpts(ambs, c) + "</select>" +
+    '<button class="btn" type="button" data-a="disp" data-id="' + esc(c.id) + '">Send to ambulance</button>' : ""), false)).join("") : '<li class="hint">No active SOS cases.</li>';
+}
+$("hList").onclick = e => {
+  const b = e.target.closest('button[data-a="disp"]'); if (!b) return;
+  const s = $("hList").querySelector('select[data-sel="' + b.dataset.id + '"]'), em = s ? s.value : "", amb = load("rr_users", []).find(u => u.email === em && u.role === "ambulance");
+  if (mutate(b.dataset.id, c => { c.status = "dispatched"; c.hospital = me.email; c.hospitalName = me.name; c.amb = amb ? amb.email : ""; c.ambName = amb ? amb.name : "";
+    addLog(c, "Hospital " + me.name + " sent the case to " + (amb ? "ambulance " + amb.name : "the ambulance team") + "."); })) toast("Case sent to ambulance.", "ok");
+  renderHospital();
+};
+
+function renderAmb() {
+  const list = cases().filter(c => (c.status === "dispatched" && (!c.amb || c.amb === me.email)) || (c.status === "enroute" && c.amb === me.email));
+  $("aList").innerHTML = list.length ? list.map(c => caseCard(c,
+    '<a class="cta" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;destination=' + esc(c.lat) + "," + esc(c.lon) + '">Directions to citizen</a>' +
+    (c.status === "dispatched" ? '<button class="btn" type="button" data-a="accept" data-id="' + esc(c.id) + '">Accept and go</button>' : '<button class="btn" type="button" data-a="close" data-id="' + esc(c.id) + '">Arrived / close case</button>') +
+    '<div class="urg" role="group" aria-label="Set urgency level"><span>Urgency:</span>' + ["high", "medium", "low"].map(u => '<button type="button" class="ub ' + u + (c.urgency === u ? " on" : "") + '" data-a="urg" data-u="' + u + '" data-id="' + esc(c.id) + '" aria-pressed="' + (c.urgency === u) + '">' + u[0].toUpperCase() + u.slice(1) + "</button>").join("") + "</div>", false)).join("") : '<li class="hint">No cases sent to ambulances yet.</li>';
+}
+$("aList").onclick = e => {
+  const b = e.target.closest("button[data-a]"); if (!b) return; const a = b.dataset.a;
+  mutate(b.dataset.id, c => {
+    if (a === "accept") { c.status = "enroute"; c.amb = me.email; c.ambName = me.name; addLog(c, "Ambulance " + me.name + " accepted the case and is on the way."); }
+    else if (a === "urg") { c.urgency = b.dataset.u; addLog(c, "Urgency set to " + b.dataset.u.toUpperCase() + " by " + me.name + "."); }
+    else if (a === "close") { c.status = "closed"; addLog(c, "Ambulance " + me.name + " reached the citizen. Case closed."); }
+  });
+  renderAmb();
+};
+
+function renderHistory() {
+  const mine = c => me.role === "citizen" ? c.email === me.email : me.role === "hospital" ? c.hospital === me.email : c.amb === me.email;
+  const list = cases().filter(mine);
+  $("histList").innerHTML = list.length ? list.map(c => caseCard(c, mapA(c), true)).join("") : '<li class="hint">No history yet.</li>';
+}
+function renderMyCase() {
+  const c = cases().find(x => x.email === me.email);
+  $("myCase").innerHTML = c ? '<p style="margin:0 0 8px"><span class="pill ' + STC[c.status] + '">' + ST[c.status] + "</span> " + urgPill(c) + '</p><p class="hint" style="margin:0">' + esc(fmt(c.created)) +
+    (c.nearestName && !c.hospitalName ? " &middot; Closest hospital: " + esc(c.nearestName) + " (" + km(c.nearestKm) + ")" : "") + (c.hospitalName ? " &middot; Hospital: " + esc(c.hospitalName) : "") + (c.ambName ? " &middot; Ambulance: " + esc(c.ambName) : "") + "</p>" : "No SOS sent yet.";
+}
+addEventListener("storage", e => {
+  if (e.key !== "rr_cases" || !(me = getMe())) return;
+  const n = (v, s) => { try { return (v ? JSON.parse(v) : []).filter(c => c.status === s).length; } catch (x) { return 0; } };
+  if (me.role === "hospital" && n(e.newValue, "new") > n(e.oldValue, "new")) { let top = null; try { top = JSON.parse(e.newValue)[0]; } catch (x) {} toast(top && top.nearest === me.email ? "New SOS case. You are the closest hospital." : "New SOS case received.", "err"); }
+  if (me.role === "ambulance" && n(e.newValue, "dispatched") > n(e.oldValue, "dispatched")) toast("A hospital sent you a new case.", "err");
+  const id = (location.hash || "#home").slice(1);
+  if (id === "hospital") renderHospital(); else if (id === "ambulance") renderAmb(); else if (id === "history") renderHistory(); else if (id === "sos") renderMyCase();
+});
+
+route();
+})();
+</script>
+</body>
+</html>
